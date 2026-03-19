@@ -4,6 +4,10 @@
 A full-stack Banking Management System built with **Java Spring Boot** (backend) and **React** (frontend), with MySQL as the database.
 
 ---
+## 🚀 Live Demo
+
+- **Frontend:** https://banking-management-system-khaki.vercel.app
+- **Backend API:** https://banking-management-system-production.up.railway.app
 
 ## 🛠 Tech Stack
 

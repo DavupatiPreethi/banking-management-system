@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🏦 NovaBank — Banking Management System
 
 A full-stack Banking Management System built with **Java Spring Boot** (backend) and **React** (frontend), with MySQL as the database.
@@ -137,6 +138,6 @@ Frontend starts at: `http://localhost:3000`
 
 ---
 
-## 👨‍💻 Built For
-
-JPMC Software Engineer Interview — Portfolio Project
+=======
+# banking-management-system
+>>>>>>> 2e13e5f8ec99242891ef910f38323101b8e532cd

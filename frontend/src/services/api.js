@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API = axios.create({ baseURL: 'https://banking-management-system-production.up.railway.app/api' });
+const API = axios.create({ baseURL: 'https://banking-management-system-0qjj.onrender.com/api' });
 
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');

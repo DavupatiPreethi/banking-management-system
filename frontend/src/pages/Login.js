@@ -1,27 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loginUser } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
-  const [form, setForm] = useState({ email: '', password: '' });
-  const [error, setError] = useState('');
+  const [form, setForm]       = useState({ email: '', password: '' });
+  const [error, setError]     = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, sessionExpired, clearSessionExpired } = useAuth();
   const navigate = useNavigate();
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  useEffect(() => {
+    if (sessionExpired) {
+      setError('Your session has expired. Please sign in again.');
+    }
+    if (sessionStorage.getItem('sessionExpired')) {
+      setError('Your session has expired. Please sign in again.');
+      sessionStorage.removeItem('sessionExpired');
+    }
+    return () => clearSessionExpired();
+  }, [sessionExpired, clearSessionExpired]);
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+    if (error && !error.includes('expired')) setError('');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(''); setLoading(true);
+    setError('');
+    setLoading(true);
     try {
       const res = await loginUser(form);
       login(res.data);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data || 'Invalid credentials. Please try again.');
-    } finally { setLoading(false); }
+      const msg = err.response?.data;
+      setError(typeof msg === 'string' ? msg : 'Invalid email or password. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -60,12 +78,14 @@ export default function Login() {
             <div className="form-group">
               <label className="form-label">Email Address</label>
               <input className="form-input" type="email" name="email"
-                placeholder="you@example.com" value={form.email} onChange={handleChange} required />
+                placeholder="you@example.com" value={form.email}
+                onChange={handleChange} required autoComplete="email" />
             </div>
             <div className="form-group">
               <label className="form-label">Password</label>
               <input className="form-input" type="password" name="password"
-                placeholder="Enter your password" value={form.password} onChange={handleChange} required />
+                placeholder="Enter your password" value={form.password}
+                onChange={handleChange} required autoComplete="current-password" />
             </div>
             <button className="btn-primary" type="submit" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign In →'}

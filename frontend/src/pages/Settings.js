@@ -1,15 +1,46 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { changePassword } from '../services/api';
 
 export default function Settings() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
+  const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [pwMsg, setPwMsg]   = useState({ type: '', text: '' });
+  const [pwLoading, setPwLoading] = useState(false);
+  const [showPw, setShowPw] = useState(false);
+
   const initials = user?.fullName
     ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
     : 'U';
+
+  const handlePwChange = async (e) => {
+    e.preventDefault();
+    if (pwForm.newPassword !== pwForm.confirmPassword) {
+      setPwMsg({ type: 'error', text: 'New passwords do not match.' });
+      return;
+    }
+    if (pwForm.newPassword.length < 6) {
+      setPwMsg({ type: 'error', text: 'Password must be at least 6 characters.' });
+      return;
+    }
+    setPwLoading(true);
+    setPwMsg({ type: '', text: '' });
+    try {
+      await changePassword({ currentPassword: pwForm.currentPassword, newPassword: pwForm.newPassword });
+      setPwMsg({ type: 'success', text: 'Password changed successfully! Please log in again.' });
+      setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setTimeout(() => { logout(); navigate('/login'); }, 2000);
+    } catch (err) {
+      const msg = err.response?.data;
+      setPwMsg({ type: 'error', text: typeof msg === 'string' ? msg : 'Failed to change password.' });
+    } finally {
+      setPwLoading(false);
+    }
+  };
 
   return (
     <div className="dashboard-layout">
@@ -20,7 +51,6 @@ export default function Settings() {
           <p className="page-sub">Manage your account settings and preferences.</p>
         </div>
 
-        {/* Profile Card */}
         <div className="card" style={{ marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
             <div style={{
@@ -38,7 +68,6 @@ export default function Settings() {
         </div>
 
         <div className="grid-2">
-          {/* Account Info */}
           <div className="card">
             <h3 style={{ fontWeight: 700, marginBottom: 18 }}>Account Information</h3>
             {[
@@ -54,7 +83,6 @@ export default function Settings() {
             ))}
           </div>
 
-          {/* Security */}
           <div className="card">
             <h3 style={{ fontWeight: 700, marginBottom: 18 }}>Security & Privacy</h3>
             {[
@@ -72,6 +100,46 @@ export default function Settings() {
               </div>
             ))}
           </div>
+        </div>
+
+        <div className="card" style={{ marginTop: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+            <h3 style={{ fontWeight: 700 }}>Change Password</h3>
+            <button onClick={() => setShowPw(v => !v)} className="btn-outline" style={{ fontSize: 13, padding: '6px 14px' }}>
+              {showPw ? 'Cancel' : '🔑 Change Password'}
+            </button>
+          </div>
+
+          {showPw && (
+            <form onSubmit={handlePwChange} style={{ maxWidth: 420 }}>
+              {pwMsg.text && (
+                <div className={pwMsg.type === 'success' ? 'success-msg' : 'error-msg'} style={{ marginBottom: 16 }}>
+                  {pwMsg.text}
+                </div>
+              )}
+              <div className="form-group">
+                <label className="form-label">Current Password</label>
+                <input className="form-input" type="password" placeholder="Enter current password"
+                  value={pwForm.currentPassword}
+                  onChange={e => setPwForm({ ...pwForm, currentPassword: e.target.value })} required />
+              </div>
+              <div className="form-group">
+                <label className="form-label">New Password</label>
+                <input className="form-input" type="password" placeholder="Min. 6 characters"
+                  value={pwForm.newPassword}
+                  onChange={e => setPwForm({ ...pwForm, newPassword: e.target.value })} required minLength={6} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Confirm New Password</label>
+                <input className="form-input" type="password" placeholder="Re-enter new password"
+                  value={pwForm.confirmPassword}
+                  onChange={e => setPwForm({ ...pwForm, confirmPassword: e.target.value })} required minLength={6} />
+              </div>
+              <button className="btn-gold" type="submit" disabled={pwLoading}>
+                {pwLoading ? 'Updating...' : 'Update Password'}
+              </button>
+            </form>
+          )}
         </div>
 
         <div className="card" style={{ marginTop: 20, borderLeft: '4px solid var(--red)' }}>
